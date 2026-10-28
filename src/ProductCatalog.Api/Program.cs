@@ -30,11 +30,30 @@ timestamp = DateTime.UtcNow }))
 app.MapGet("/api/products", async (AppDbContext db) =>
 await db.Products.AsNoTracking().ToListAsync())
 .WithName("GetAllProducts");
+
 app.MapPost("/api/products", async (Product product, AppDbContext
 db) =>
 {
 db.Products.Add(product);
 await db.SaveChangesAsync();
-return Results.Created($"/api/products/{product.Id}", product);
+return Results.Created($"/api/get-product/{product.Id}", product);
 }).WithName("CreateProduct");
+
+app.MapGet("/api/getproduct/{id}", async (int id, AppDbContext db) =>
+{
+    var product = await db.Products
+        .AsNoTracking()
+        .FirstOrDefaultAsync(p => p.Id == id);
+
+    if (product is null)
+    {
+        return Results.NotFound(new
+        {
+            message = $"Aucun produit trouvé avec l'identifiant {id}."
+        });
+    }
+
+    return Results.Ok(product);
+})
+.WithName("GetProductById");
 app.Run();
